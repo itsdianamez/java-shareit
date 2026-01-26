@@ -1,0 +1,5 @@
+ru/practicum/shareit/user/model/User.class
+ru/practicum/shareit/ShareItApp.class
+ru/practicum/shareit/booking/dto/BookingDto.class
+ru/practicum/shareit/request/ItemRequest.class
+ru/practicum/shareit/request/ItemRequestController.class
