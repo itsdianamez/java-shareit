@@ -1,83 +1,57 @@
 package ru.practicum.shareit.user.service;
 
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.UserMapper;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.Collection;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
+    private final UserRepository userRepository;
 
-    private final UserRepository repository;
-
-    public UserServiceImpl(UserRepository repository) {
-        this.repository = repository;
+    public User create(User user) {
+        log.info("Создание пользователя: {}", user);
+        User savedUser = userRepository.save(user);
+        log.info("Пользователь {} успешно создан", savedUser.getId());
+        return savedUser;
     }
 
-    @Override
-    public UserDto create(UserDto userDto) {
-        if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email обязателен для заполнения");
-        }
-
-        if (!userDto.getEmail().contains("@")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        }
-
-        if (repository.existsByEmail(userDto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Такой email уже существует");
-        }
-
-        User user = UserMapper.toUser(userDto);
-        return UserMapper.toUserDto(repository.save(user));
+    public User update(Long id, User user) {
+        log.info("Обновление пользователя {}: {}", id, user);
+        User existing = get(id);
+        if (user.getName() != null) existing.setName(user.getName());
+        if (user.getEmail() != null) existing.setEmail(user.getEmail());
+        User updatedUser = userRepository.save(existing);
+        log.info("Пользователь {} успешно обновлен", updatedUser.getId());
+        return updatedUser;
     }
 
-    @Override
-    public UserDto update(Long userId, UserDto userDto) {
-        User user = repository.findById(userId);
-
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        if (userDto.getName() != null) {
-            user.setName(userDto.getName());
-        }
-
-        if (userDto.getEmail() != null) {
-            if (repository.existsByEmail(userDto.getEmail())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT);
-            }
-            user.setEmail(userDto.getEmail());
-        }
-
-        return UserMapper.toUserDto(repository.update(user));
+    public User get(Long id) {
+        log.info("Получение пользователя {}", id);
+        User found = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Пользователь {} не найден", id);
+                    return new IllegalArgumentException("Пользователь не найден");
+                });
+        log.info("Пользователь {} успешно найден", id);
+        return found;
     }
 
-    @Override
-    public UserDto getById(Long userId) {
-        return UserMapper.toUserDto(repository.findById(userId));
+    public List<User> getAll() {
+        log.info("Получение всех пользователей");
+        List<User> users = userRepository.findAll();
+        log.info("Найдено {} пользователей", users.size());
+        return users;
     }
 
-    @Override
-    public Collection<UserDto> getAll() {
-        return repository.findAll().stream()
-                .map(UserMapper::toUserDto)
-                .toList();
-    }
-
-    @Override
-    public void delete(Long userId) {
-        User user = repository.findById(userId);
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        repository.delete(userId);
+    public void delete(Long id) {
+        log.info("Удаление пользователя {}", id);
+        userRepository.deleteById(id);
+        log.info("Пользователь {} успешно удален", id);
     }
 }
-
