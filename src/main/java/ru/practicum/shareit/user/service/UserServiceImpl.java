@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
         User found = userRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Пользователь {} не найден", id);
-                    return new IllegalArgumentException("Пользователь не найден");
+                    return new NotFoundException("Пользователь не найден");
                 });
         log.info("Пользователь {} успешно найден", id);
         return found;
