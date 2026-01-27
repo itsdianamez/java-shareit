@@ -1,13 +1,14 @@
 package ru.practicum.shareit.item.service;
 
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.exception.BadRequestException;
+import ru.practicum.shareit.exception.ForbiddenException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
@@ -34,16 +35,16 @@ public class ItemServiceImpl implements ItemService {
     public Item create(Long ownerId, ItemDto dto) {
         if (dto.getName() == null || dto.getName().isBlank()) {
             log.warn("Нет названия вещи");
-            throw new IllegalArgumentException("Название вещи не может быть пустым");
+            throw new BadRequestException("Отсутствует название");
         }
 
         if (dto.getDescription() == null || dto.getDescription().isBlank()) {
             log.warn("Нет описания вещи");
-            throw new ValidationException("Отсутствует описание");
+            throw new BadRequestException("Отсутствует описание");
         }
 
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException(new ChangeSetPersister.NotFoundException()));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Item item = new Item();
         item.setName(dto.getName());
@@ -59,11 +60,11 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Item update(Long ownerId, Long itemId, ItemDto dto) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException(new ChangeSetPersister.NotFoundException()));
+                .orElseThrow(() -> new NotFoundException("Вещь не найдена"));
 
         if (!item.getOwner().getId().equals(ownerId)) {
             log.warn("Пользователь {} не является владельцем вещи {}", ownerId, itemId);
-            throw new RuntimeException(new ChangeSetPersister.NotFoundException());
+            throw new ForbiddenException("Только владелец может обновлять вещь");
         }
 
         if (dto.getName() != null) {
@@ -85,7 +86,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> {
                     log.warn("Вещь {} не найдена", itemId);
-                    return new RuntimeException(new ChangeSetPersister.NotFoundException());
+                    return new NotFoundException("Вещь не найдена");
                 });
 
         ItemWithBookingsDto dto = new ItemWithBookingsDto();
@@ -190,14 +191,14 @@ public class ItemServiceImpl implements ItemService {
                 );
         if (!hasBooking) {
             log.warn("Пользователь {} не арендовал вещь {}", userId, itemId);
-            throw new ValidationException("Пользователь не арендовал вещь");
+            throw new BadRequestException("Пользователь не арендовал вещь");
         }
 
         User author = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(new ChangeSetPersister.NotFoundException()));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException(new ChangeSetPersister.NotFoundException()));
+                .orElseThrow(() -> new NotFoundException("Вещь не найдена"));
 
         Comment comment = new Comment();
         comment.setText(text);
