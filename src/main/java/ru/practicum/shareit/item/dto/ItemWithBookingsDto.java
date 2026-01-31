@@ -8,11 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class ItemWithBookingsDto {
-    private Long id;
-    private String name;
-    private String description;
-    private Boolean available;
+public class ItemWithBookingsDto extends ItemDto {
     private BookingShortDto lastBooking;
     private BookingShortDto nextBooking;
     private List<CommentDto> comments;

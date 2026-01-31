@@ -5,9 +5,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Getter
 @Setter
 public class BookingDto {

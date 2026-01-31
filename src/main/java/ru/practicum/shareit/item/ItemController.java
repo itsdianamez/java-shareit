@@ -8,7 +8,7 @@ import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.mapper.CommentMapper;
-import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
@@ -24,23 +24,23 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public Item create(@RequestHeader(USER_HEADER) Long userId,
-                       @RequestBody ItemDto dto) {
+    public ItemDto create(@RequestHeader(USER_HEADER) Long userId,
+                          @RequestBody ItemDto dto) {
         log.info("Создание вещи пользователем {}: {}", userId, dto);
-        return itemService.create(userId, dto);
+        return ItemMapper.toItemDto(itemService.create(userId, dto));
     }
 
     @PatchMapping("/{itemId}")
-    public Item update(@RequestHeader(USER_HEADER) Long userId,
-                       @PathVariable Long itemId,
-                       @RequestBody ItemDto dto) {
+    public ItemDto update(@RequestHeader(USER_HEADER) Long userId,
+                          @PathVariable Long itemId,
+                          @RequestBody ItemDto dto) {
         log.info("Обновление вещи {} пользователем {}: {}", itemId, userId, dto);
-        return itemService.update(userId, itemId, dto);
+        return ItemMapper.toItemDto(itemService.update(userId, itemId, dto));
     }
 
     @GetMapping("/{itemId}")
-    public Object get(@RequestHeader(USER_HEADER) Long userId,
-                      @PathVariable Long itemId) {
+    public ItemWithBookingsDto get(@RequestHeader(USER_HEADER) Long userId,
+                                   @PathVariable Long itemId) {
         log.info("Получение вещи {} пользователем {}", itemId, userId);
         return itemService.get(userId, itemId);
     }
@@ -52,9 +52,12 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<Item> search(@RequestParam String text) {
+    public List<ItemDto> search(@RequestParam String text) {
         log.info("Поиск вещей по тексту: '{}'", text);
-        return itemService.search(text);
+        return itemService.search(text)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .toList();
     }
 
     @PostMapping("/{itemId}/comment")

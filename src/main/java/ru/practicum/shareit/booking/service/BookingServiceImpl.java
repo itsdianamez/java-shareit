@@ -11,10 +11,10 @@ import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +24,8 @@ import java.util.List;
 @Slf4j
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
-    private final ItemRepository itemRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
+    private final ItemService itemService;
 
     public Booking create(Long userId, BookingDto dto) {
         if (dto.getStart() == null || dto.getEnd() == null) {
@@ -33,18 +33,16 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (!dto.getEnd().isAfter(dto.getStart())) {
-            throw new BadRequestException("Дата конца бронирования должгна быть после даты начала");
+            throw new BadRequestException("Дата конца бронирования должна быть после даты начала");
         }
 
         if (dto.getStart().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Дата начала не может быть в прошлом");
         }
 
-        User booker = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        User booker = userService.get(userId);
 
-        Item item = itemRepository.findById(dto.getItemId())
-                .orElseThrow(() -> new NotFoundException("Вещь не найдена"));
+        Item item = itemService.getItem(dto.getItemId());
 
         if (!item.getAvailable()) {
             log.warn("Вещь {} недоступна для бронирования", dto.getItemId());
@@ -91,8 +89,7 @@ public class BookingServiceImpl implements BookingService {
 
     public List<Booking> getOwnerBookings(Long ownerId) {
         log.info("Получение всех бронирований владельца {}", ownerId);
-        userRepository.findById(ownerId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        userService.get(ownerId);
         return bookingRepository.findByItemOwnerId(ownerId, Sort.by(Sort.Direction.DESC, "start"));
     }
 }

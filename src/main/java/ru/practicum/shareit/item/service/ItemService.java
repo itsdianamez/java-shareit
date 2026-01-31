@@ -12,11 +12,13 @@ public interface ItemService {
 
     Item update(Long ownerId, Long itemId, ItemDto dto);
 
-    Object get(Long userId, Long itemId);
+    ItemWithBookingsDto get(Long userId, Long itemId);
 
     List<ItemWithBookingsDto> getOwnerItems(Long ownerId);
 
     List<Item> search(String text);
 
     Comment addComment(Long userId, Long itemId, String text);
+
+    Item getItem(Long itemId);
 }
