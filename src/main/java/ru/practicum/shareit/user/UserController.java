@@ -1,45 +1,55 @@
 package ru.practicum.shareit.user;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
-import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
-    private final UserService service;
-
-    public UserController(UserService service) {
-        this.service = service;
-    }
+    private final UserService userService;
 
     @PostMapping
-    public UserDto create(@RequestBody UserDto userDto) {
-        return service.create(userDto);
+    public UserDto create(@Valid @RequestBody UserDto dto) {
+        log.info("Создание пользователя: {}", dto);
+        User user = userService.create(UserMapper.toUser(dto));
+        return UserMapper.toUserDto(user);
     }
 
-    @PatchMapping("/{userId}")
-    public UserDto update(@PathVariable Long userId,
-                          @RequestBody UserDto userDto) {
-        return service.update(userId, userDto);
+    @PatchMapping("/{id}")
+    public UserDto update(@PathVariable Long id,
+                          @RequestBody UserDto dto) {
+        log.info("Обновление пользователя {}: {}", id, dto);
+        User user = userService.update(id, UserMapper.toUser(dto));
+        return UserMapper.toUserDto(user);
     }
 
-    @GetMapping("/{userId}")
-    public UserDto getById(@PathVariable Long userId) {
-        return service.getById(userId);
+    @GetMapping("/{id}")
+    public UserDto get(@PathVariable Long id) {
+        log.info("Получение пользователя {}", id);
+        return UserMapper.toUserDto(userService.get(id));
     }
 
     @GetMapping
-    public Collection<UserDto> getAll() {
-        return service.getAll();
+    public List<UserDto> getAll() {
+        log.info("Получение всех пользователей");
+        return userService.getAll().stream()
+                .map(UserMapper::toUserDto)
+                .toList();
     }
 
-    @DeleteMapping("/{userId}")
-    public void delete(@PathVariable Long userId) {
-        service.delete(userId);
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        log.info("Удаление пользователя {}", id);
+        userService.delete(id);
     }
 }
-
