@@ -33,14 +33,12 @@ class ItemDtoJsonTest {
 
     @Test
     void deserialize_shouldReadCorrectJson() throws Exception {
-        String content = """
-                {
-                  "id": 1,
-                  "name": "Laptop",
-                  "description": "Black",
-                  "available": true
-                }
-                """;
+        String content = "{\n" +
+                "  \"id\": 1,\n" +
+                "  \"name\": \"Laptop\",\n" +
+                "  \"description\": \"Black\",\n" +
+                "  \"available\": true\n" +
+                "}";
 
         ItemDto dto = json.parseObject(content);
 
