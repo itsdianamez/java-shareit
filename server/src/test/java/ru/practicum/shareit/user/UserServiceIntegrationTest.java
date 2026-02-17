@@ -42,11 +42,11 @@ public class UserServiceIntegrationTest {
         User saved = userService.create(makeUser("User", "user@mail.com"));
 
         User update = new User();
-        update.setName("Person");
+        update.setName("Name");
 
         User updated = userService.update(saved.getId(), update);
 
-        assertEquals("Person", updated.getName());
+        assertEquals("Name", updated.getName());
         assertEquals("user@mail.com", updated.getEmail());
     }
 
@@ -59,6 +59,54 @@ public class UserServiceIntegrationTest {
         assertThrows(NotFoundException.class,
                 () -> userService.get(saved.getId()));
     }
+
+    @Test
+    void get_shouldThrow_whenUserNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> userService.get(999L));
+    }
+
+    @Test
+    void update_shouldThrow_whenUserNotFound() {
+        User update = new User();
+        update.setName("NewName");
+
+        assertThrows(NotFoundException.class,
+                () -> userService.update(999L, update));
+    }
+
+    @Test
+    void update_shouldChangeEmail() {
+        User saved = userService.create(makeUser("User", "user@mail.com"));
+
+        User update = new User();
+        update.setEmail("new@mail.com");
+
+        User updated = userService.update(saved.getId(), update);
+
+        assertEquals("new@mail.com", updated.getEmail());
+    }
+
+    @Test
+    void update_shouldNotOverrideWithNulls() {
+        User saved = userService.create(makeUser("User", "user@mail.com"));
+
+        User update = new User(); // все поля null
+
+        User updated = userService.update(saved.getId(), update);
+
+        assertEquals("User", updated.getName());
+        assertEquals("user@mail.com", updated.getEmail());
+    }
+
+    @Test
+    void create_shouldThrow_whenEmailExists() {
+        userService.create(makeUser("User", "user@mail.com"));
+
+        assertThrows(RuntimeException.class,
+                () -> userService.create(makeUser("Another", "user@mail.com")));
+    }
+
 
     private User makeUser(String name, String email) {
         User user = new User();
