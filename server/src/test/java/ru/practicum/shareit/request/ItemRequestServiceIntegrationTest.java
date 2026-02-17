@@ -62,6 +62,25 @@ class ItemRequestServiceIntegrationTest {
     }
 
     @Test
+    void getUserRequests_shouldReturnList() {
+        ItemRequestCreateDto dto = new ItemRequestCreateDto();
+        dto.setDescription("Need laptop");
+
+        requestService.create(user.getId(), dto);
+
+        List<ItemRequestDto> list =
+                requestService.getUserRequests(user.getId());
+
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    void getRequest_shouldThrow_whenNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> requestService.getRequest(user.getId(), 999L));
+    }
+
+    @Test
     void getUserRequests_shouldReturnOnlyOwnRequests() {
         ItemRequestCreateDto dto = new ItemRequestCreateDto();
         dto.setDescription("Need a laptop");

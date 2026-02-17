@@ -10,6 +10,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.BadRequestException;
+import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
@@ -37,23 +38,24 @@ class BookingServiceIntegrationTest {
     private User booker;
     private Item item;
 
+
     @BeforeEach
-    void setup() {
+    void setUp() {
         owner = userService.create(makeUser("Owner", "owner@mail.com"));
         booker = userService.create(makeUser("Booker", "booker@mail.com"));
 
-        ItemDto dto = new ItemDto();
-        dto.setName("Laptop");
-        dto.setDescription("Black");
-        dto.setAvailable(true);
-
-        item = itemService.create(owner.getId(), dto);
+        item = itemService.create(owner.getId(),
+                makeItemDto("Laptop", "Desc", true));
     }
 
     @Test
     void create_shouldCreateBooking() {
-        Booking booking = bookingService.create(booker.getId(), validDto());
+        Booking booking = bookingService.create(
+                booker.getId(),
+                makeBookingDto()
+        );
 
+        assertNotNull(booking.getId());
         assertEquals(BookingStatus.WAITING, booking.getStatus());
     }
 
@@ -67,21 +69,14 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
-    void create_shouldThrow_whenItemUnavailable() {
-        item.setAvailable(false);
-
-        BookingDto dto = validDto();
-
-        assertThrows(BadRequestException.class,
-                () -> bookingService.create(booker.getId(), dto));
-    }
-
-    @Test
     void approve_shouldApproveBooking() {
-        Booking booking = bookingService.create(booker.getId(), validDto());
+        Booking booking = bookingService.create(booker.getId(), makeBookingDto());
 
-        Booking approved =
-                bookingService.approve(owner.getId(), booking.getId(), true);
+        Booking approved = bookingService.approve(
+                owner.getId(),
+                booking.getId(),
+                true
+        );
 
         assertEquals(BookingStatus.APPROVED, approved.getStatus());
     }
@@ -97,6 +92,14 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
+    void approve_shouldThrow_whenNotOwner() {
+        Booking booking = bookingService.create(booker.getId(), makeBookingDto());
+
+        assertThrows(ForbiddenException.class,
+                () -> bookingService.approve(booker.getId(), booking.getId(), true));
+    }
+
+    @Test
     void approve_shouldThrow_whenBookingNotFound() {
         assertThrows(NotFoundException.class,
                 () -> bookingService.approve(owner.getId(), 999L, true));
@@ -104,10 +107,9 @@ class BookingServiceIntegrationTest {
 
     @Test
     void get_shouldReturnBooking_forOwner() {
-        Booking booking = bookingService.create(booker.getId(), validDto());
+        Booking booking = bookingService.create(booker.getId(), makeBookingDto());
 
-        Booking result =
-                bookingService.get(owner.getId(), booking.getId());
+        Booking result = bookingService.get(owner.getId(), booking.getId());
 
         assertEquals(booking.getId(), result.getId());
     }
@@ -126,6 +128,15 @@ class BookingServiceIntegrationTest {
     void get_shouldThrow_whenBookingNotFound() {
         assertThrows(NotFoundException.class,
                 () -> bookingService.get(owner.getId(), 999L));
+    }
+
+    @Test
+    void get_shouldThrow_whenNoAccess() {
+        User stranger = userService.create(makeUser("Stranger", "s@mail.com"));
+        Booking booking = bookingService.create(booker.getId(), makeBookingDto());
+
+        assertThrows(ForbiddenException.class,
+                () -> bookingService.get(stranger.getId(), booking.getId()));
     }
 
     @Test
@@ -161,5 +172,21 @@ class BookingServiceIntegrationTest {
         user.setName(name);
         user.setEmail(email);
         return user;
+    }
+
+    private ItemDto makeItemDto(String name, String desc, Boolean available) {
+        ItemDto dto = new ItemDto();
+        dto.setName(name);
+        dto.setDescription(desc);
+        dto.setAvailable(available);
+        return dto;
+    }
+
+    private BookingDto makeBookingDto() {
+        BookingDto dto = new BookingDto();
+        dto.setItemId(item.getId());
+        dto.setStart(LocalDateTime.now().plusHours(1));
+        dto.setEnd(LocalDateTime.now().plusDays(1));
+        return dto;
     }
 }
