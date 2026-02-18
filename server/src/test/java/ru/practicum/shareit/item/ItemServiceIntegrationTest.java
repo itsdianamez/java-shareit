@@ -85,6 +85,13 @@ class ItemServiceIntegrationTest {
                 () -> itemService.create(owner.getId(), dto));
     }
 
+    @Test
+    void create_shouldThrow_whenOwnerNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> itemService.create(999L,
+                        makeItemDto("Item", "Desc", true, null)));
+    }
+
 
     @Test
     void get_shouldReturnItem_forOwner() {
@@ -120,6 +127,21 @@ class ItemServiceIntegrationTest {
                 itemService.getOwnerItems(owner.getId());
 
         assertEquals(1, items.size());
+    }
+
+    @Test
+    void getOwnerItems_shouldReturnItemWithoutBookingsAndComments() {
+        Item item = itemService.create(owner.getId(),
+                makeItemDto("Item", "Desc", true, null));
+
+        List<ItemWithBookingsDto> result =
+                itemService.getOwnerItems(owner.getId());
+
+        ItemWithBookingsDto dto = result.get(0);
+
+        assertNull(dto.getLastBooking());
+        assertNull(dto.getNextBooking());
+        assertTrue(dto.getComments().isEmpty());
     }
 
     @Test
@@ -168,6 +190,21 @@ class ItemServiceIntegrationTest {
     }
 
     @Test
+    void update_shouldUpdateOnlyName() {
+        Item item = itemService.create(owner.getId(),
+                makeItemDto("Old", "Desc", true, null));
+
+        ItemDto update = new ItemDto();
+        update.setName("New");
+
+        Item updated = itemService.update(owner.getId(), item.getId(), update);
+
+        assertEquals("New", updated.getName());
+        assertEquals("Desc", updated.getDescription());
+        assertTrue(updated.getAvailable());
+    }
+
+    @Test
     void search_shouldReturnMatchingItems() {
         itemService.create(owner.getId(),
                 makeItemDto("Laptop", "Black", true, null));
@@ -182,6 +219,16 @@ class ItemServiceIntegrationTest {
         List<Item> found = itemService.search("");
 
         assertTrue(found.isEmpty());
+    }
+
+    @Test
+    void search_shouldReturnEmpty_whenNull() {
+        assertTrue(itemService.search(null).isEmpty());
+    }
+
+    @Test
+    void search_shouldReturnEmpty_whenBlankSpaces() {
+        assertTrue(itemService.search("   ").isEmpty());
     }
 
     @Test
@@ -296,6 +343,15 @@ class ItemServiceIntegrationTest {
         assertTrue(found.isEmpty());
     }
 
+    @Test
+    void search_shouldIgnoreUnavailable() {
+        itemService.create(owner.getId(),
+                makeItemDto("Laptop", "Black", false, null));
+
+        List<Item> found = itemService.search("lap");
+
+        assertTrue(found.isEmpty());
+    }
 
     private User makeUser(String name, String email) {
         User user = new User();
