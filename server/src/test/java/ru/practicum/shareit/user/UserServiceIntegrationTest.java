@@ -107,6 +107,14 @@ public class UserServiceIntegrationTest {
                 () -> userService.create(makeUser("Another", "user@mail.com")));
     }
 
+    @Test
+    void getAll_shouldReturnUsers() {
+        userService.create(makeUser("User1", "u1@mail.com"));
+        userService.create(makeUser("User2", "u2@mail.com"));
+
+        assertEquals(2, userService.getAll().size());
+    }
+
 
     private User makeUser(String name, String email) {
         User user = new User();

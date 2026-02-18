@@ -40,5 +40,18 @@ class ErrorHandlerTest {
 
         assertEquals("Bad", result.get("error"));
     }
+
+    @Test
+    void exceptions_shouldStoreMessage() {
+        assertEquals("Bad",
+                new BadRequestException("Bad").getMessage());
+
+        assertEquals("Forbidden",
+                new ForbiddenException("Forbidden").getMessage());
+
+        assertEquals("NotFound",
+                new NotFoundException("NotFound").getMessage());
+    }
+
 }
 

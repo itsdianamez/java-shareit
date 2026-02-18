@@ -60,6 +60,16 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
+    void createBooking_shouldIncreaseCount() {
+        User user = userService.create(makeUser("User", "user@mail.com"));
+        BookingDto dto = makeBookingDto();
+
+        Booking booking = bookingService.create(user.getId(), dto);
+
+        assertNotNull(booking.getId());
+    }
+
+    @Test
     void create_shouldThrow_whenStartInPast() {
         BookingDto dto = validDto();
         dto.setStart(LocalDateTime.now().minusDays(1));

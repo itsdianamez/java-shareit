@@ -116,6 +116,17 @@ class BookingControllerTest {
     }
 
     @Test
+    void userBookings_withState() throws Exception {
+        when(bookingService.getUserBookings(2L))
+                .thenReturn(List.of(booking));
+
+        mockMvc.perform(get("/bookings")
+                        .param("state", "ALL")
+                        .header(USER_HEADER, 2L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void ownerBookings_shouldReturnList() throws Exception {
         when(bookingService.getOwnerBookings(1L))
                 .thenReturn(List.of(booking));
