@@ -81,6 +81,26 @@ class ItemRequestServiceIntegrationTest {
     }
 
     @Test
+    void getRequest_shouldThrow_whenUserNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> requestService.getRequest(999L, 1L));
+    }
+
+    @Test
+    void getRequest_shouldReturnEmptyItems_whenNoItems() {
+        ItemRequestCreateDto dto = new ItemRequestCreateDto();
+        dto.setDescription("Need laptop");
+
+        ItemRequestDto request =
+                requestService.create(user.getId(), dto);
+
+        ItemRequestDto result =
+                requestService.getRequest(user.getId(), request.getId());
+
+        assertTrue(result.getItems().isEmpty());
+    }
+
+    @Test
     void getUserRequests_shouldReturnOnlyOwnRequests() {
         ItemRequestCreateDto dto = new ItemRequestCreateDto();
         dto.setDescription("Need a laptop");
@@ -92,6 +112,18 @@ class ItemRequestServiceIntegrationTest {
                 requestService.getUserRequests(user.getId());
 
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void getUserRequests_shouldThrow_whenUserNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> requestService.getUserRequests(999L));
+    }
+
+    @Test
+    void getOtherUsersRequests_shouldThrow_whenUserNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> requestService.getOtherUsersRequests(999L));
     }
 
     @Test

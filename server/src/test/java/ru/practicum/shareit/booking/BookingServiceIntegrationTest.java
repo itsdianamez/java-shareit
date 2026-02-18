@@ -79,6 +79,37 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
+    void create_shouldThrow_whenStartNull() {
+        BookingDto dto = new BookingDto();
+        dto.setItemId(item.getId());
+        dto.setEnd(LocalDateTime.now().plusDays(1));
+
+        assertThrows(BadRequestException.class,
+                () -> bookingService.create(booker.getId(), dto));
+    }
+
+    @Test
+    void create_shouldThrow_whenEndNull() {
+        BookingDto dto = new BookingDto();
+        dto.setItemId(item.getId());
+        dto.setStart(LocalDateTime.now().plusDays(1));
+
+        assertThrows(BadRequestException.class,
+                () -> bookingService.create(booker.getId(), dto));
+    }
+
+    @Test
+    void create_shouldThrow_whenEndBeforeStart() {
+        BookingDto dto = new BookingDto();
+        dto.setItemId(item.getId());
+        dto.setStart(LocalDateTime.now().plusDays(2));
+        dto.setEnd(LocalDateTime.now().plusDays(1));
+
+        assertThrows(BadRequestException.class,
+                () -> bookingService.create(booker.getId(), dto));
+    }
+
+    @Test
     void approve_shouldApproveBooking() {
         Booking booking = bookingService.create(booker.getId(), makeBookingDto());
 

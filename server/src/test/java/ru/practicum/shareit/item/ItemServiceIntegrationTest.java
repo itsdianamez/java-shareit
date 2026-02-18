@@ -92,7 +92,6 @@ class ItemServiceIntegrationTest {
                         makeItemDto("Item", "Desc", true, null)));
     }
 
-
     @Test
     void get_shouldReturnItem_forOwner() {
         Item item = itemService.create(owner.getId(),
@@ -142,6 +141,63 @@ class ItemServiceIntegrationTest {
         assertNull(dto.getLastBooking());
         assertNull(dto.getNextBooking());
         assertTrue(dto.getComments().isEmpty());
+    }
+
+    @Test
+    void getOwnerItems_shouldReturnWithComments() {
+        Item item = itemService.create(owner.getId(),
+                makeItemDto("Item", "Desc", true, null));
+
+        bookingRepository.save(
+                Booking.builder()
+                        .item(item)
+                        .booker(stranger)
+                        .start(LocalDateTime.now().minusDays(2))
+                        .end(LocalDateTime.now().minusDays(1))
+                        .status(BookingStatus.APPROVED)
+                        .build()
+        );
+
+        itemService.addComment(stranger.getId(), item.getId(), "Nice");
+
+        List<ItemWithBookingsDto> result =
+                itemService.getOwnerItems(owner.getId());
+
+        assertEquals(1, result.get(0).getComments().size());
+    }
+
+    @Test
+    void getOwnerItems_shouldFillLastAndNext() {
+        Item item = itemService.create(owner.getId(),
+                makeItemDto("Item", "Desc", true, null));
+
+        bookingRepository.save(
+                Booking.builder()
+                        .item(item)
+                        .booker(stranger)
+                        .start(LocalDateTime.now().minusDays(5))
+                        .end(LocalDateTime.now().minusDays(4))
+                        .status(BookingStatus.APPROVED)
+                        .build()
+        );
+
+        bookingRepository.save(
+                Booking.builder()
+                        .item(item)
+                        .booker(stranger)
+                        .start(LocalDateTime.now().plusDays(1))
+                        .end(LocalDateTime.now().plusDays(2))
+                        .status(BookingStatus.APPROVED)
+                        .build()
+        );
+
+        List<ItemWithBookingsDto> result =
+                itemService.getOwnerItems(owner.getId());
+
+        ItemWithBookingsDto dto = result.get(0);
+
+        assertNotNull(dto.getLastBooking());
+        assertNotNull(dto.getNextBooking());
     }
 
     @Test
@@ -202,6 +258,24 @@ class ItemServiceIntegrationTest {
         assertEquals("New", updated.getName());
         assertEquals("Desc", updated.getDescription());
         assertTrue(updated.getAvailable());
+    }
+
+    @Test
+    void update_shouldUpdateAllFields() {
+        Item item = itemService.create(owner.getId(),
+                makeItemDto("Old", "Desc", true, null));
+
+        ItemDto update = new ItemDto();
+        update.setName("New");
+        update.setDescription("NewDesc");
+        update.setAvailable(false);
+
+        Item updated =
+                itemService.update(owner.getId(), item.getId(), update);
+
+        assertEquals("New", updated.getName());
+        assertEquals("NewDesc", updated.getDescription());
+        assertFalse(updated.getAvailable());
     }
 
     @Test
