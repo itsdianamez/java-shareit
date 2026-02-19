@@ -256,11 +256,12 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Comment addComment(Long userId, Long itemId, String text) {
         boolean hasBooking = bookingRepository
-                .existsByItemIdAndBookerIdAndEndBefore(
+                .existsByItemIdAndBookerIdAndEndLessThanEqual(
                         itemId,
                         userId,
                         LocalDateTime.now()
                 );
+
         if (!hasBooking) {
             log.warn("Пользователь {} не арендовал вещь {}", userId, itemId);
             throw new BadRequestException("Пользователь не арендовал вещь");
